@@ -11,7 +11,7 @@
 </head>
 <body class="register_login">
     <h1>Sign In to Steam<sup class="tm">TM</sup></h1>
-    <form action="{{ url_for('login') }}" method="POST">
+    <form action="{{ url_for('auth.login') }}" method="POST">
         {% if error %}
             <p class="error">{{ error }}</p>
         {% endif %}
@@ -19,7 +19,7 @@
         <input type="text" name="email" placeholder="E-Mail Address">
         <label>Password</label>
         <input type="password" name="password" placeholder="Password">
-        <p class="register-link">Didn't sign up yet? <a href="{{ url_for('registration') }}">Click here to register.</a></p>
+        <p class="register-link">Didn't sign up yet? <a href="{{ url_for('auth.registration') }}">Click here to register.</a></p>
         <button type="submit">Sign In</button>
     </form>
 </body>
