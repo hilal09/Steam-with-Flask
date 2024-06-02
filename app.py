@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from sqlalchemy import text
 import re
 
 app = Flask(__name__)
@@ -11,42 +12,39 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-class UserAccounts(db.Model):
-    __tablename__ = 'user_accounts'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    avatar = db.Column(db.String(200), nullable=True)
-    
-@app.route('/',methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('login.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    elif request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
 
         if not email or not password:
             return render_template('login.html', error="Please fill in the fields.")
 
-        user = UserAccounts.query.filter_by(email=email).first()
+        result = db.session.execute(
+            text("SELECT * FROM user_accounts WHERE email = :email"), {'email': email}
+        ).mappings().first()  # Use .mappings() to return results as dictionaries
 
-        if user and bcrypt.check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            return redirect(url_for('dashboard_page'))
+
+        if result and bcrypt.check_password_hash(result['password'], password):
+            session['user_id'] = result['id']
+            return redirect(url_for('dashboard'))
         else:
             return render_template('login.html', error="Invalid email or password.")
 
     return render_template('login.html')
 
 @app.route('/dashboard')
-def dashboard_page():
+def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return 'Dashboard Page'
+    return render_template('dashboard.html')
 
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
@@ -62,23 +60,30 @@ def registration():
         if not validate_email(email):
             return render_template('registration.html', error="Invalid e-mail.")
 
-        user_exists = UserAccounts.query.filter_by(email=email).first()
-        if user_exists:
+        result = db.session.execute(
+            text("SELECT * FROM user_accounts WHERE email = :email"), {'email': email}
+        ).fetchone()
+
+        if result:
             return render_template('registration.html', error="E-mail taken.")
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        new_user = UserAccounts(name=name, email=email, password=hashed_password, avatar=avatar)
-        db.session.add(new_user)
+        db.session.execute(
+            text("INSERT INTO user_accounts (name, email, password, avatar) VALUES (:name, :email, :password, :avatar)"),
+            {'name': name, 'email': email, 'password': hashed_password, 'avatar': avatar}
+        )
         db.session.commit()
 
-        if new_user.id:
-            return redirect(url_for('dashboard_page'))
-        else:
-            return render_template('registration.html', error="registrationfailed")
-    
+        return redirect(url_for('dashboard'))
+
     error = request.args.get('error')
     return render_template('registration.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
 
 def validate_email(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
