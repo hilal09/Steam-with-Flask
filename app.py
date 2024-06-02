@@ -3,7 +3,7 @@ from config import Config
 from functions.models import db, bcrypt
 from functions.auth import auth_bp
 from functions.main import main_bp
-from functions.profile import profile_bp  # Import the profile blueprint
+from functions.profile import profile_bp
 
 
 app = Flask(__name__)  # Create an instance of the Flask class

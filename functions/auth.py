@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
+from flask import Blueprint, request, render_template, redirect, url_for, session
 from functions.models import UserAccounts
 from functions.models import bcrypt
 from functions.models import db
