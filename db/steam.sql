@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 02. Jun 2024 um 21:12
+-- Erstellungszeit: 02. Jun 2024 um 22:25
 -- Server-Version: 10.4.32-MariaDB
 -- PHP-Version: 8.2.12
 
@@ -72,7 +72,8 @@ CREATE TABLE `my_series` (
   `seasons` int(11) DEFAULT NULL,
   `genre` varchar(30) NOT NULL,
   `platform` varchar(30) DEFAULT NULL,
-  `picture` mediumblob DEFAULT NULL
+  `picture` mediumblob DEFAULT NULL,
+  `rating` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -86,9 +87,16 @@ CREATE TABLE `user_accounts` (
   `name` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
-  `avatar` varchar(50) DEFAULT NULL,
-  `rating` int(11) DEFAULT NULL
+  `avatar` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Daten für Tabelle `user_accounts`
+--
+
+INSERT INTO `user_accounts` (`id`, `name`, `email`, `password`, `avatar`) VALUES
+(20, 'test', 'test@test.de', '$2b$12$RTSAkIGDKAWGZHsVjJ8tB.ThYio1jhc86ilORToh6a1duiALwfNiS', ''),
+(21, 'Hilal', 'h.cub@web.de', '$2b$12$/SohX5./OPzH.80WMSGGseLixwV./vTc/XTXb6gFUiYz99AJrldHa', '');
 
 --
 -- Indizes der exportierten Tabellen
