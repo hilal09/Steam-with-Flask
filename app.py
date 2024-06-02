@@ -18,6 +18,10 @@ class UserAccounts(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     avatar = db.Column(db.String(200), nullable=True)
+    
+@app.route('/',methods=['GET', 'POST'])
+def index():
+    return render_template('login.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
