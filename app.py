@@ -1,66 +1,85 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import create_user, get_user_by_email
+from flask import Flask, request, redirect, url_for, render_template, session
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+import re
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.config['SECRET_KEY'] = 'your_secret_key'  # Add a secret key for session management
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/steam'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-@app.route('/')
-def home():
-    return redirect(url_for('login'))
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+
+@app.route('/',methods=['GET', 'POST'])
+def index():
+    return render_template('login.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        
-        if not email or not password:
-            flash('Please fill in the fields.', 'error')
-            return redirect(url_for('login'))
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-        user = get_user_by_email(email)
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['name'] = user['name']
-            return redirect(url_for('dashboard'))
+        if not email or not password:
+            return render_template('login.html', error="Please fill in the fields.")
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and bcrypt.check_password_hash(user.password, password):
+            session['user_id'] = user.id
+            return redirect(url_for('dashboard_page'))
         else:
-            flash('Invalid email or password.', 'error')
-            return redirect(url_for('login'))
+            return render_template('login.html', error="Invalid email or password.")
+
     return render_template('login.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        
-        if not name or not email or not password:
-            flash('Please fill in the fields.', 'error')
-            return redirect(url_for('register'))
-        
-        if get_user_by_email(email):
-            flash('Email already taken.', 'error')
-            return redirect(url_for('register'))
-
-        hashed_password = generate_password_hash(password, method='sha256')
-        create_user(name, email, hashed_password)
-        flash('Registration successful. You can now log in.', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html')
-
 @app.route('/dashboard')
-def dashboard():
+def dashboard_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('dashboard.html', name=session['name'])
+    return 'Dashboard Page'
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    session.pop('name', None)
-    return redirect(url_for('login'))
+@app.route('/registration', methods=['GET', 'POST'])
+def registration_page():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not name or not email or not password:
+            return render_template('registration.html', error="Please fill in the fields.")
+
+        if not validate_email(email):
+            return render_template('registration.html', error="Invalid e-mail.")
+
+        user_exists = User.query.filter_by(email=email).first()
+        if user_exists:
+            return render_template('registration.html', error="E-mail taken.")
+
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        new_user = User(name=name, email=email, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        if new_user.id:
+            return redirect(url_for('dashboard_page'))
+        else:
+            return render_template('registration.html', error="registrationfailed")
+    
+    error = request.args.get('error')
+    return render_template('registration.html', error=error)
+
+def validate_email(email):
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    return re.match(email_regex, email) is not None
 
 if __name__ == '__main__':
     app.run(debug=True)
