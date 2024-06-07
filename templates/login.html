@@ -38,13 +38,13 @@
 <body class="register_login">
     <h1>Sign In to Steam<sup class="tm">TM</sup></h1>
     <form id="loginForm">
+        <p id="error" class="error"></p>
         <label>E-Mail Address </label>
         <input type="email" id="email" placeholder="E-Mail Address">
         <label>Password</label>
         <input type="password" id="password" placeholder="Password">
-        <p class="register-link">Didn't sign up yet? <a href="{{ url_for('register') }}">Click here to register.</a></p>
+        <p class="register-link">Didn't sign up yet? <a href="{{ url_for('register') }}">Click here to Sign Up.</a></p>
         <button type="submit">Sign In</button>
-        <p id="error" class="error"></p>
     </form>
 </body>
 </html>

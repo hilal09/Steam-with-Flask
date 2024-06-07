@@ -11,6 +11,7 @@
 <body class="register_login">
     <h1>Sign up to Steam<sup class="tm">TM</sup></h1>
     <form id="registerForm">
+        <p id="error" class="error"></p>
         <label>Name</label>
         <input type="text" id="name" placeholder="Name">
         <label>E-Mail Address</label>
@@ -19,7 +20,6 @@
         <input type="password" id="password" placeholder="Password">
         <p class="register-link">Already Signed Up? <a href="{{ url_for('index') }}">Click here to Log In.</a></p>
         <button type="submit">Sign Up</button>
-        <p id="error" class="error"></p>
     </form>
     <script>
         document.getElementById('registerForm').addEventListener('submit', function(e) {

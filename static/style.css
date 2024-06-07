@@ -44,6 +44,7 @@ body {
 }
 
 .register_login form input[type="text"],
+.register_login form input[type="email"],
 .register_login form input[type="password"] {
     width: calc(100% - 50px);
     padding: 10px;

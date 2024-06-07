@@ -2,17 +2,14 @@ from flask import Flask, render_template, request, jsonify
 from flask_mysqldb import MySQL
 from flask_bcrypt import check_password_hash, generate_password_hash
 from flask import session, redirect, url_for
+from config import Config  
+
 
 
 app = Flask(__name__)
 app.secret_key = 'steam123'
+app.config.from_object(Config)  
 
-
-# MySQL configurations
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'steam'
 
 mysql = MySQL(app)
 
