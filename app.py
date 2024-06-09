@@ -95,5 +95,68 @@ def logout():
     # Redirect to the login page
     return redirect(url_for('index'))
 
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM user_accounts WHERE id = %s', (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+
+    return render_template('profile.html', user=user)
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+
+    user_id = request.form['userId']
+    name = request.form['full_name']
+    email = request.form['email']
+    password = request.form['password']
+    avatar = request.form.get('avatar', '')
+
+    cursor = mysql.connection.cursor()
+
+    if password:
+        hashed_password = generate_password_hash(password).decode('utf-8')
+        cursor.execute('''
+            UPDATE user_accounts 
+            SET name = %s, email = %s, password = %s, avatar = %s 
+            WHERE id = %s
+        ''', (name, email, hashed_password, avatar, user_id))
+    else:
+        cursor.execute('''
+            UPDATE user_accounts 
+            SET name = %s, email = %s, avatar = %s 
+            WHERE id = %s
+        ''', (name, email, avatar, user_id))
+
+    mysql.connection.commit()
+    cursor.close()
+
+    return redirect(url_for('profile'))
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+
+    user_id = request.form['userId']
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM my_series WHERE user_id = %s', (user_id,))
+    cursor.execute('DELETE FROM user_accounts WHERE id = %s', (user_id,))
+
+    mysql.connection.commit()
+    cursor.close()
+
+    session.clear()
+
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     app.run(debug=True)
