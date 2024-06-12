@@ -4,7 +4,7 @@ from flask_bcrypt import check_password_hash, generate_password_hash
 from flask import session, redirect, url_for
 from config import Config  
 
-
+#amena
 
 app = Flask(__name__)
 app.secret_key = 'steam123'
@@ -157,9 +157,6 @@ def delete_account():
     session.clear()
 
     return redirect(url_for('index'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 
 # REST endpoints for series
