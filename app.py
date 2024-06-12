@@ -160,3 +160,94 @@ def delete_account():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+# REST endpoints for series
+@app.route('/api/series', methods=['GET'])
+def get_all_series():
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series')
+    series = cursor.fetchall()
+    cursor.close()
+
+    series_list = []
+    for row in series:
+        series_list.append({
+            'id': row[0],
+            'title': row[1],
+            'year': row[2],
+            'seasons': row[3],
+            'genre': row[4],
+            'platform': row[5],
+            'picture': row[6],
+            'rating': row[7]
+        })
+
+    return jsonify(series_list)
+
+@app.route('/api/series', methods=['POST'])
+def add_series():
+    data = request.get_json()
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    title = data.get('title')
+    year = data.get('year')
+    seasons = data.get('seasons')
+    genre = data.get('genre')
+    platform = data.get('platform')
+    picture = data.get('picture')
+    rating = data.get('rating')
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('''
+        INSERT INTO my_series (user_id, title, year, seasons, genre, platform, picture, rating)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    ''', (user_id, title, year, seasons, genre, platform, picture, rating))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'success': True}), 201
+
+@app.route('/api/series/<int:series_id>', methods=['PUT'])
+def update_series(series_id):
+    data = request.get_json()
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    title = data.get('title')
+    year = data.get('year')
+    seasons = data.get('seasons')
+    genre = data.get('genre')
+    platform = data.get('platform')
+    picture = data.get('picture')
+    rating = data.get('rating')
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('''
+        UPDATE my_series 
+        SET title = %s, year = %s, seasons = %s, genre = %s, platform = %s, picture = %s, rating = %s
+        WHERE id = %s AND user_id = %s
+    ''', (title, year, seasons, genre, platform, picture, rating, series_id, user_id))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'success': True}), 200
+
+@app.route('/api/series/<int:series_id>', methods=['DELETE'])
+def delete_series(series_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM my_series WHERE id = %s AND user_id = %s', (series_id, user_id))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'success': True}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)

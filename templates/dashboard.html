@@ -4,9 +4,145 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboardStyle.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Welcome to the Dashboard</h1>
     <a href="{{ url_for('logout') }}">Logout</a>
+
+    <div class="content">
+        <div class="dashboard-container">
+            <div class="series-list">
+                <button class="open-popup">Add new series</button>
+                {% for serie in series %}
+                <div class="series-item">
+                    <img src="data:image/jpg;base64,{{ serie.picture }}" alt="{{ serie.title }}">
+                    <div class="series-item-info">
+                        <div class="rating">
+                            {% for i in range(1, 6) %}
+                                {% if i <= serie.rating %}
+                                    <span class="star filled">&#9733;</span>
+                                {% else %}
+                                    <span class="star">&#9733;</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <p>{{ serie.title }}</p>
+                        <p>Year: {{ serie.year }}</p>
+                        <p>Seasons: {{ serie.seasons }}</p>
+                        <p>Genre: {{ serie.genre }}</p>
+                        <p>Platform: {{ serie.platform }}</p>
+                    </div>
+                    <button class="delete-btn" data-series-id="{{ serie.id }}">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="popup">
+        <button class="close-btn">&times;</button>
+        <h2>Add Series</h2>
+        <form id="series-form" enctype="multipart/form-data">
+            <label for="title">Title:</label>
+            <input type="text" class="title" name="title" required>
+            <label for="year">Year:</label>
+            <input type="number" class="year" name="year" required min="1895" max="2024">
+            <label for="seasons">Seasons:</label>
+            <input type="number" class="seasons" name="seasons" required min="0">
+            <label for="genre">Genre:</label>
+            <select class="genre" name="genre" required>
+                <option value="" disabled selected>Choose Genre</option>
+                <option value="action">Action</option>
+                <option value="adventure">Adventure</option>
+                <option value="animation">Animation</option>
+                <option value="comedy">Comedy</option>
+                <option value="docu">Documentary</option>
+                <option value="drama">Drama</option>
+                <option value="fantasy">Fantasy</option>
+                <option value="horror">Horror</option>
+                <option value="romantic">Romantic</option>
+                <option value="Sci-Fi">Sci-fi</option>
+                <option value="Thriller">Thriller</option>
+                <option value="Western">Western</option>
+                <option value="Other">Other</option>
+            </select>
+            <label for="platform">Platform:</label>
+            <select class="platform" name="platform" required>
+                <option value="" disabled selected>Choose Platform</option>
+                <option value="amazon prime">Amazon Prime</option>
+                <option value="hbo">HBO</option>
+                <option value="hbo max">HBO Max</option>
+                <option value="hulu">Hulu</option>
+                <option value="netflix">Netflix</option>
+                <option value="nbc">NBC</option>
+                <option value="rtl+">RTL+</option>
+                <option value="other">Other</option>
+            </select>
+            <label for="rating">Rating (1-5):</label>
+            <input type="number" class="rating" name="rating" required min="1" max="5">
+            <label for="picture">Picture:</label>
+            <input type="file" class="picture" name="picture" required>
+
+            <button type="submit">Save</button>
+        </form>
+    </div>
+
+    <script>
+    $(document).ready(function() {
+        // Popup functionality
+        $(".open-popup").click(function() {
+            $(".popup").fadeIn();
+        });
+
+        $(".close-btn").click(function() {
+            $(".popup").fadeOut();
+        });
+
+        // Delete series functionality
+        $(".delete-btn").click(function() {
+            var seriesId = $(this).data("series-id");
+            var confirmDelete = confirm("Are you sure you want to delete this series?");
+
+            if (confirmDelete) {
+                $.ajax({
+                    url: "/delete_series/" + seriesId,
+                    method: "POST",
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Failed to delete series:", error);
+                    }
+                });
+            }
+        });
+
+        // Form submission for adding series
+        $("#series-form").submit(function(event) {
+            event.preventDefault();
+            var formData = new FormData($(this)[0]);
+
+            $.ajax({
+                url: "/add_series",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    $(".popup").fadeOut();
+                    $("#series-form")[0].reset();
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Failed to add series:", error);
+                }
+            });
+        });
+    });
+    </script>
+
 </body>
 </html>
