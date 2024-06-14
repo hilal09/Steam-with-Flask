@@ -160,7 +160,7 @@ def delete_account():
 
 
 # REST endpoints for series
-@app.route('/api/series', methods=['GET'])
+@app.route('/series', methods=['GET'])
 def get_all_series():
     cursor = mysql.connection.cursor()
     cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series')
@@ -182,7 +182,7 @@ def get_all_series():
 
     return jsonify(series_list)
 
-@app.route('/api/series', methods=['POST'])
+@app.route('/series', methods=['POST'])
 def add_series():
     data = request.get_json()
     user_id = session.get('user_id')
@@ -207,33 +207,7 @@ def add_series():
 
     return jsonify({'success': True}), 201
 
-@app.route('/api/series/<int:series_id>', methods=['PUT'])
-def update_series(series_id):
-    data = request.get_json()
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    title = data.get('title')
-    year = data.get('year')
-    seasons = data.get('seasons')
-    genre = data.get('genre')
-    platform = data.get('platform')
-    picture = data.get('picture')
-    rating = data.get('rating')
-
-    cursor = mysql.connection.cursor()
-    cursor.execute('''
-        UPDATE my_series 
-        SET title = %s, year = %s, seasons = %s, genre = %s, platform = %s, picture = %s, rating = %s
-        WHERE id = %s AND user_id = %s
-    ''', (title, year, seasons, genre, platform, picture, rating, series_id, user_id))
-    mysql.connection.commit()
-    cursor.close()
-
-    return jsonify({'success': True}), 200
-
-@app.route('/api/series/<int:series_id>', methods=['DELETE'])
+@app.route('/series/<int:series_id>', methods=['DELETE'])
 def delete_series(series_id):
     user_id = session.get('user_id')
     if not user_id:
