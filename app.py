@@ -1,3 +1,4 @@
+import base64
 from flask import Flask, render_template, request, jsonify
 from flask_mysqldb import MySQL
 from flask_bcrypt import check_password_hash, generate_password_hash
@@ -36,6 +37,12 @@ def dashboard():
 
         series_list = []
         for row in series:
+            # Convert the picture blob to base64 encoding
+            if row[6] is not None:  # Assuming picture is at index 6
+                picture_base64 = base64.b64encode(row[6]).decode('utf-8')
+            else:
+                picture_base64 = None
+
             series_list.append({
                 'id': row[0],
                 'title': row[1],
@@ -43,7 +50,7 @@ def dashboard():
                 'seasons': row[3],
                 'genre': row[4],
                 'platform': row[5],
-                'picture': row[6],
+                'picture': picture_base64,  # Replace row[6] with base64 encoded string
                 'rating': row[7]
             })
 
@@ -215,7 +222,7 @@ def add_series():
 
     picture = request.files.get('picture')
     if picture:
-        picture_data = picture.read()
+        picture_data = base64.b64encode(picture.read()).decode('utf-8')  # Base64 kodierung
     else:
         picture_data = None
 
