@@ -1,4 +1,29 @@
+/* logo style */
+
+.logo {
+
+    margin-left: 20px;
+    color: white;
+    font-size: 30px;
+}
+
+.tm {
+    font-size: 0.4em;
+    vertical-align: top;
+}
+
+/* logo style */
+
 /* beginning of styles for dashboard page */
+*{
+    font-family: "Urbanist", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: normal;
+    font-style: normal;
+    color: white;
+    margin:0;
+    padding:0;
+}
 body {
     background-image: url("background.png");
     background-attachment: fixed;
@@ -43,6 +68,7 @@ body {
     max-width: 400px;
     transition: top 0ms ease-in-out 300ms, opacity 300ms ease-in-out, margin-top 300ms ease-in-out;
     z-index: 1;
+    color: white; 
 }
 
 .popup form {
