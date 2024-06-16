@@ -9,20 +9,21 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <a href="{{ url_for('logout') }}">Logout</a>
+
+    {% include 'navigation.html' %}
 
     <div class="content">
         <div class="logo">
             <h1>Steam<sup class="tm">TM</sup></h1>
         </div>
 
-  
         <div class="dashboard-container">
             <div class="series-list">
                 <button class="open-popup">Add new series</button>
                 {% for serie in series %}
                 <div class="series-item">
-                    <img src="data:image/jpg;base64,{{ serie.picture }}" alt="{{ serie.title }}">
+                    <!-- Überprüfen Sie, ob der Base64-String korrekt ist -->
+                    <img src="data:image/jpeg;base64,{{ serie.picture }}" alt="{{ serie.title }}">
                     <div class="series-item-info">
                         <div class="rating">
                             {% for i in range(1, 6) %}
@@ -40,7 +41,7 @@
                         <p>Platform: {{ serie.platform }}</p>
                     </div>
                     <button class="delete-btn" data-series-id="{{ serie.id }}">&times;</button>
-                </div>
+                </div>                
                 {% endfor %}
             </div>
         </div>
@@ -116,7 +117,6 @@
                     $("#series-form")[0].reset();
                 }
             }
-
 
             $(".open-popup").click(function() {
                 togglePopup(true);
