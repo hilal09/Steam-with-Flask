@@ -28,10 +28,27 @@ def register():
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' in session:
-        # User is authenticated, render the dashboard
-        return render_template('dashboard.html')
+        user_id = session['user_id']
+        cursor = mysql.connection.cursor()
+        cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series WHERE user_id = %s', (user_id,))
+        series = cursor.fetchall()
+        cursor.close()
+
+        series_list = []
+        for row in series:
+            series_list.append({
+                'id': row[0],
+                'title': row[1],
+                'year': row[2],
+                'seasons': row[3],
+                'genre': row[4],
+                'platform': row[5],
+                'picture': row[6],
+                'rating': row[7]
+            })
+
+        return render_template('dashboard.html', series=series_list)
     else:
-        # User is not authenticated, redirect to login page
         return redirect(url_for('index'))
 
 
@@ -158,8 +175,6 @@ def delete_account():
 
     return redirect(url_for('index'))
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
 
 # REST endpoints for series
@@ -187,24 +202,28 @@ def get_all_series():
 
 @app.route('/series', methods=['POST'])
 def add_series():
-    data = request.get_json()
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    title = data.get('title')
-    year = data.get('year')
-    seasons = data.get('seasons')
-    genre = data.get('genre')
-    platform = data.get('platform')
-    picture = data.get('picture')
-    rating = data.get('rating')
+    title = request.form.get('title')
+    year = request.form.get('year')
+    seasons = request.form.get('seasons')
+    genre = request.form.get('genre')
+    platform = request.form.get('platform')
+    rating = request.form.get('rating')
+
+    picture = request.files.get('picture')
+    if picture:
+        picture_data = picture.read()
+    else:
+        picture_data = None
 
     cursor = mysql.connection.cursor()
     cursor.execute('''
         INSERT INTO my_series (user_id, title, year, seasons, genre, platform, picture, rating)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    ''', (user_id, title, year, seasons, genre, platform, picture, rating))
+    ''', (user_id, title, year, seasons, genre, platform, picture_data, rating))
     mysql.connection.commit()
     cursor.close()
 
