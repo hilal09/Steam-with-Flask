@@ -186,6 +186,11 @@ def delete_account():
 # REST endpoints for series
 @app.route('/series', methods=['GET'])
 def get_all_series():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+
     cursor = mysql.connection.cursor()
     cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series')
     series = cursor.fetchall()
@@ -217,13 +222,14 @@ def add_series():
     seasons = request.form.get('seasons')
     genre = request.form.get('genre')
     platform = request.form.get('platform')
+    picture = request.files.get('picture')
     rating = request.form.get('rating')
 
-    picture = request.files.get('picture')
-    if picture:
-        picture_data = base64.b64encode(picture.read()).decode('utf-8')  # Base64 kodierung
-    else:
-        picture_data = None
+    if not title or not year or not seasons or not genre or not platform or not picture or not rating:
+        return jsonify({'error': 'Missing data'}), 400
+    
+    picture_data = picture.read()
+    picture_base64 = base64.b64encode(picture_data).decode('utf-8')
 
     cursor = mysql.connection.cursor()
     cursor.execute('''
