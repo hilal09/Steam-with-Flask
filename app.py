@@ -118,6 +118,9 @@ def logout():
     # Redirect to the login page
     return redirect(url_for('index'))
 
+
+#Profile start
+
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
@@ -129,6 +132,15 @@ def profile():
     user = cursor.fetchone()
     cursor.close()
 
+    if user:
+        user = {
+            'id': user[0],
+            'name': user[1],
+            'email': user[2],
+            'password': user[3],
+            'avatar': user[4]
+        }
+
     return render_template('profile.html', user=user)
 
 @app.route('/update_profile', methods=['POST'])
@@ -136,11 +148,12 @@ def update_profile():
     if 'user_id' not in session:
         return redirect(url_for('index'))
 
-    user_id = request.form['userId']
-    name = request.form['full_name']
-    email = request.form['email']
-    password = request.form['password']
-    avatar = request.form.get('avatar', '')
+    data = request.get_json()
+    user_id = data.get('userId')
+    name = data.get('full_name')
+    email = data.get('email')
+    password = data.get('password')
+    avatar = data.get('avatar', '')
 
     cursor = mysql.connection.cursor()
 
@@ -161,14 +174,16 @@ def update_profile():
     mysql.connection.commit()
     cursor.close()
 
-    return redirect(url_for('profile'))
+    return jsonify({'message': 'Profile updated successfully'})
+
 
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
     if 'user_id' not in session:
         return redirect(url_for('index'))
 
-    user_id = request.form['userId']
+    data = request.get_json()
+    user_id = data.get('userId')
 
     cursor = mysql.connection.cursor()
     cursor.execute('DELETE FROM my_series WHERE user_id = %s', (user_id,))
@@ -179,8 +194,9 @@ def delete_account():
 
     session.clear()
 
-    return redirect(url_for('index'))
+    return jsonify({'message': 'Account deleted successfully'})
 
+#Profile end
 
 
 # REST endpoints for series
