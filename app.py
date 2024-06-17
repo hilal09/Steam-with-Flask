@@ -5,7 +5,6 @@ from flask_bcrypt import check_password_hash, generate_password_hash
 from flask import session, redirect, url_for
 from config import Config  
 
-#amena
 
 app = Flask(__name__)
 app.secret_key = 'steam123'
