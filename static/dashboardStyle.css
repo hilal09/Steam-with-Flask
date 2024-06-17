@@ -35,7 +35,7 @@ body {
 .delete-btn {
     position: absolute;
     top: 5px;
-    left: 5px;
+    right: 5px;
     width: 20px;
     height: 20px;
     background-color: #CD3333;
@@ -157,12 +157,12 @@ body.active-popup .popup {
     position: relative;
     width: 150px;
     height: 200px;
-    background-color: #14143c;
+    background-color: #3b3b7a;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 25px;
+    font-size: 20px;
     cursor: pointer;
     margin: 20px; 
     display: flex;
