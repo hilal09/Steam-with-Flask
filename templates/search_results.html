@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <style>
+        .search-result {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-results-container">
+        {% for series in series %}
+            <div class="search-result">
+                <h3>{{ series.title }}</h3>
+                <p>{{ series.genre }}</p>
+                <p>{{ series.platform }}</p>
+                <p>{{ series.year }}</p>
+                <p>{{ series.seasons }} seasons</p>
+                <img src="data:image/jpeg;base64,{{ series.picture }}" alt="{{ series.title }} poster">
+                <p>Rating: {{ series.rating }}</p>
+                <button onclick="addToMySeries('{{ series.id }}')">Add to My Series</button>
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        function addToMySeries(series_id) {
+            fetch('/add_to_my_series', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ series_id: series_id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Series added to your list');
+                } else {
+                    alert(data.error || 'Failed to add series');
+                }
+            })
+            .catch(error => console.error('Error adding series:', error));
+        }
+    </script>
+</body>
+</html>
