@@ -138,7 +138,7 @@ def profile():
             'name': user[1],
             'email': user[2],
             'password': user[3],
-            'avatar': user[4]
+            'avatar': user[4] if user[4] else 'default_avatar.jpg' 
         }
 
     return render_template('profile.html', user=user)
