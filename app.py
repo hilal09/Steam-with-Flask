@@ -233,19 +233,21 @@ def add_series():
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    title = request.form.get('title')
-    year = request.form.get('year')
-    seasons = request.form.get('seasons')
-    genre = request.form.get('genre')
-    platform = request.form.get('platform')
-    picture = request.files.get('picture')
-    rating = request.form.get('rating')
+    data = request.get_json() # Get JSON data from Request, instead of form data
 
-    if not title or not year or not seasons or not genre or not platform or not picture or not rating:
+    title = data.get('title')
+    year = data.get('year')
+    seasons = data.get('seasons')
+    genre = data.get('genre')
+    platform = data.get('platform')
+    picture_base64 = data.get('picture') # Now expecting a base64 string
+    rating = data.get('rating')
+
+    if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
         return jsonify({'error': 'Missing data'}), 400
-    
-    picture_data = picture.read()
-    picture_base64 = base64.b64encode(picture_data).decode('utf-8')
+
+
+    picture_data = base64.b64decode(picture_base64) # decode the base64 string to bytes
 
     cursor = mysql.connection.cursor()
     cursor.execute('''
@@ -256,6 +258,7 @@ def add_series():
     cursor.close()
 
     return jsonify({'success': True}), 201
+
 
 @app.route('/series/<int:series_id>', methods=['DELETE'])
 def delete_series(series_id):

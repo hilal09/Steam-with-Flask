@@ -129,28 +129,52 @@
 
             $("#series-form").submit(function(event) {
                 event.preventDefault();
-                var formData = new FormData(this);
-
-                $.ajax({
-                    url: '/series',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(data) {
-                        if (data.error) {
-                            console.error("Failed to add series:", data.error);
-                        } else {
-                            togglePopup(false);
-                            $("#series-form")[0].reset();
-                            location.reload();
+            
+                const title = $(".title").val();
+                const year = $(".year").val();
+                const seasons = $(".seasons").val();
+                const genre = $(".genre").val();
+                const platform = $(".platform").val();
+                const rating = $(".rating").val();
+            
+                var pictureFile = $(".picture")[0].files[0];
+            
+                var reader = new FileReader();
+                reader.onloadend = function() {
+                    var pictureBase64 = reader.result.replace(/^.*;base64,/, '');
+            
+                    var formData = {
+                        title: title,
+                        year: year,
+                        seasons: seasons,
+                        genre: genre,
+                        platform: platform,
+                        picture: pictureBase64,
+                        rating: rating
+                    };
+            
+                    $.ajax({
+                        url: '/series',
+                        method: 'POST',
+                        contentType: "application/json",
+                        data: JSON.stringify(formData),
+                        success: function(data) {
+                            if (data.error) {
+                                console.error("Failed to add series:", data.error);
+                            } else {
+                                togglePopup(false);
+                                $("#series-form")[0].reset();
+                                location.reload();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("Failed to add series:", error);
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Failed to add series:", error);
-                    }
-                });
+                    });
+                };
+                reader.readAsDataURL(pictureFile);
             });
+            
 
             $(".delete-btn").click(function() {
                 var seriesId = $(this).data("series-id");
