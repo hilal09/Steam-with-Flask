@@ -1,10 +1,9 @@
-import base64
 from flask import Flask, render_template, request, jsonify
 from flask_mysqldb import MySQL
 from flask_bcrypt import check_password_hash, generate_password_hash
 from flask import session, redirect, url_for
 from config import Config  
-
+import base64
 
 app = Flask(__name__)
 app.secret_key = 'steam123'
@@ -36,8 +35,7 @@ def dashboard():
 
         series_list = []
         for row in series:
-            # Convert the picture blob to base64 encoding
-            if row[6] is not None:  # Assuming picture is at index 6
+            if row[6] is not None:
                 picture_base64 = base64.b64encode(row[6]).decode('utf-8')
             else:
                 picture_base64 = None
@@ -49,7 +47,7 @@ def dashboard():
                 'seasons': row[3],
                 'genre': row[4],
                 'platform': row[5],
-                'picture': picture_base64,  # Replace row[6] with base64 encoded string
+                'picture': picture_base64,
                 'rating': row[7]
             })
 
@@ -233,21 +231,21 @@ def add_series():
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    data = request.get_json() # Get JSON data from Request, instead of form data
+    data = request.get_json() 
 
     title = data.get('title')
     year = data.get('year')
     seasons = data.get('seasons')
     genre = data.get('genre')
     platform = data.get('platform')
-    picture_base64 = data.get('picture') # Now expecting a base64 string
+    picture_base64 = data.get('picture')
     rating = data.get('rating')
 
     if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
         return jsonify({'error': 'Missing data'}), 400
 
 
-    picture_data = base64.b64decode(picture_base64) # decode the base64 string to bytes
+    picture_data = base64.b64decode(picture_base64)
 
     cursor = mysql.connection.cursor()
     cursor.execute('''
@@ -272,66 +270,6 @@ def delete_series(series_id):
     cursor.close()
 
     return jsonify({'success': True}), 200
-
-@app.route('/search', methods=['GET'])
-def search():
-    return render_template('search.html')
-
-@app.route('/search_handler', methods=['GET'])
-def search_handler():
-    query = request.args.get('query', '')
-    title_filter = request.args.get('title', '')
-    genre_filter = request.args.get('genre', '')
-    platform_filter = request.args.get('platform', '')
-
-    cursor = mysql.connection.cursor()
-    cursor.execute("""
-        SELECT id, title, year, seasons, genre, platform, picture, rating
-        FROM my_series
-        WHERE (title LIKE %s OR genre LIKE %s OR platform LIKE %s)
-        AND (title LIKE %s)
-        AND (genre LIKE %s)
-        AND (platform LIKE %s)
-    """, ('%' + query + '%', '%' + query + '%', '%' + query + '%', '%' + title_filter + '%', '%' + genre_filter + '%', '%' + platform_filter + '%'))
-    my_series = cursor.fetchall()
-    cursor.close()
-
-    search_results = []
-    for row in my_series:
-        picture_base64 = base64.b64encode(row[6]).decode('utf-8') if row[6] else None
-        search_results.append({
-            'id': row[0],
-            'title': row[1],
-            'year': row[2],
-            'seasons': row[3],
-            'genre': row[4],
-            'platform': row[5],
-            'picture': picture_base64,
-            'rating': row[7]
-        })
-
-    return render_template('search_results.html', series=search_results)
-
-@app.route('/add_to_my_series', methods=['POST'])
-def add_to_my_series():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    data = request.get_json()
-    series_id = data.get('series_id')
-    user_id = session['user_id']
-
-    cursor = mysql.connection.cursor()
-    cursor.execute('SELECT id FROM my_series WHERE series_id = %s AND user_id = %s', (series_id, user_id))
-    if cursor.fetchone():
-        cursor.close()
-        return jsonify({'error': 'Series already added to your list'}), 409
-
-    cursor.execute('INSERT INTO my_series (series_id, user_id) VALUES (%s, %s)', (series_id, user_id))
-    mysql.connection.commit()
-    cursor.close()
-
-    return jsonify({'success': True}), 201
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)  

@@ -1,3 +1,10 @@
+<!--
+    Author: Zeinab Barakat (add and delete series functionality and design), Hilal Cubukcu(has adapted it to meet the REST service requirements)
+    Last modified on: 19.06.2024
+    Title: Dashboard Page 
+    Summary: This page displays the dashboard for logged-in users. It retrieves series data for the current user and allows users to add new series or delete them.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +29,6 @@
                 <button class="open-popup">Add new <br> series</button>
                 {% for serie in series %}
                 <div class="series-item">
-                    <!-- Überprüfen Sie, ob der Base64-String korrekt ist -->
                     <img src="data:image/jpeg;base64,{{ serie.picture }}" alt="{{ serie.title }}">
                     <div class="series-item-info">
                         <div class="rating">
@@ -113,7 +119,6 @@
                         top: "-100%",
                         marginTop: "-20px"
                     });
-                    // Reset form fields
                     $("#series-form")[0].reset();
                 }
             }
@@ -200,7 +205,7 @@
                 const fileExtension = fileName.split('.').pop().toLowerCase();
 
                 if (fileExtension !== 'jpg' && fileExtension !== 'png') {
-                    alert('Bitte wählen Sie eine Datei mit der Erweiterung .jpg oder .png aus.');
+                    alert('Please choose a file with the .jpg or .png extension.');
                     this.value = '';
                 }
             });
