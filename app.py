@@ -273,5 +273,65 @@ def delete_series(series_id):
 
     return jsonify({'success': True}), 200
 
+@app.route('/search', methods=['GET'])
+def search():
+    return render_template('search.html')
+
+@app.route('/search_handler', methods=['GET'])
+def search_handler():
+    query = request.args.get('query', '')
+    title_filter = request.args.get('title', '')
+    genre_filter = request.args.get('genre', '')
+    platform_filter = request.args.get('platform', '')
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        SELECT id, title, year, seasons, genre, platform, picture, rating
+        FROM my_series
+        WHERE (title LIKE %s OR genre LIKE %s OR platform LIKE %s)
+        AND (title LIKE %s)
+        AND (genre LIKE %s)
+        AND (platform LIKE %s)
+    """, ('%' + query + '%', '%' + query + '%', '%' + query + '%', '%' + title_filter + '%', '%' + genre_filter + '%', '%' + platform_filter + '%'))
+    my_series = cursor.fetchall()
+    cursor.close()
+
+    search_results = []
+    for row in my_series:
+        picture_base64 = base64.b64encode(row[6]).decode('utf-8') if row[6] else None
+        search_results.append({
+            'id': row[0],
+            'title': row[1],
+            'year': row[2],
+            'seasons': row[3],
+            'genre': row[4],
+            'platform': row[5],
+            'picture': picture_base64,
+            'rating': row[7]
+        })
+
+    return render_template('search_results.html', series=search_results)
+
+@app.route('/add_to_my_series', methods=['POST'])
+def add_to_my_series():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    series_id = data.get('series_id')
+    user_id = session['user_id']
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT id FROM my_series WHERE series_id = %s AND user_id = %s', (series_id, user_id))
+    if cursor.fetchone():
+        cursor.close()
+        return jsonify({'error': 'Series already added to your list'}), 409
+
+    cursor.execute('INSERT INTO my_series (series_id, user_id) VALUES (%s, %s)', (series_id, user_id))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'success': True}), 201
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)  
