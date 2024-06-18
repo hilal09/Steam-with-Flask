@@ -1,3 +1,10 @@
+<!--
+    Author: Zeinab Barakat (add and delete series functionality and design), Hilal Cubukcu(has adapted it to meet the REST service requirements)
+    Last modified on: 19.06.2024
+    Title: Dashboard Page 
+    Summary: This page displays the dashboard for logged-in users. It retrieves series data for the current user and allows users to add new series or delete them.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +33,7 @@
                     <div class="series-item-info">
                         <div class="rating">
                             {% for i in range(1, 6) %}
-                                {% if i <= serie.rating %}
+                                {% if i == serie.rating %}
                                     <span class="star filled">&#9733;</span>
                                 {% else %}
                                     <span class="star">&#9733;</span>
@@ -112,7 +119,6 @@
                         top: "-100%",
                         marginTop: "-20px"
                     });
-                    // Reset form fields
                     $("#series-form")[0].reset();
                 }
             }

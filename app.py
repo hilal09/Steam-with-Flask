@@ -1,10 +1,9 @@
-import base64
 from flask import Flask, render_template, request, jsonify
 from flask_mysqldb import MySQL
 from flask_bcrypt import check_password_hash, generate_password_hash
 from flask import session, redirect, url_for
 from config import Config  
-
+import base64
 
 app = Flask(__name__)
 app.secret_key = 'steam123'
@@ -36,8 +35,7 @@ def dashboard():
 
         series_list = []
         for row in series:
-            # Convert the picture blob to base64 encoding
-            if row[6] is not None:  # Assuming picture is at index 6
+            if row[6] is not None:
                 picture_base64 = base64.b64encode(row[6]).decode('utf-8')
             else:
                 picture_base64 = None
@@ -49,7 +47,7 @@ def dashboard():
                 'seasons': row[3],
                 'genre': row[4],
                 'platform': row[5],
-                'picture': picture_base64,  # Replace row[6] with base64 encoded string
+                'picture': picture_base64,
                 'rating': row[7]
             })
 
@@ -272,6 +270,10 @@ def delete_series(series_id):
     cursor.close()
 
     return jsonify({'success': True}), 200
+
+@app.route('/search')
+def search():
+    return render_template('search.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)  

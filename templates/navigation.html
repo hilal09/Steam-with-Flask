@@ -12,6 +12,7 @@
         <ul>
             <li><a href="{{ url_for('logout') }}">Logout</a></li>
             <li><a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' else '' }}"><i class="fa-solid fa-house"></i>Home</a></li>
+            <li><a href="{{ url_for('search') }}" class="{{ 'active' if request.endpoint == 'search' else '' }}"><i class="fa-solid fa-magnifying-glass"></i>Search</a></li>
             <li><a href="{{ url_for('profile') }}" class="{{ 'active' if request.endpoint == 'profile' else '' }}"><i class="fa-solid fa-user"></i>Profile</a></li>
         </ul>
     </nav>

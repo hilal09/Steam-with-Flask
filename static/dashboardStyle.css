@@ -56,7 +56,7 @@ body {
 
 .popup {
     display: none;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.3);
     padding: 20px;
     border-radius: 15px;
     text-align: center;
@@ -244,12 +244,12 @@ body.active-popup .popup {
 .star {
     font-size: 24px;
     color: #ccc;
-    cursor: default; /* Cursor wird auf Standard gesetzt, um Interaktion zu vermeiden */
+    cursor: default;
     transition: color 0.3s;
 }
 
 .star.filled {
-    color: #ffcc00; /* Farbe für gefüllte Sterne */
+    color: #ffcc00;
 }
 
 /* end of styles for dashboard page */

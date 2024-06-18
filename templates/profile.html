@@ -9,12 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    {% include 'navigation.html' %}
+
     <button class="sidebar-toggle">&#9776;</button>
     <div class="profile-container">
         <aside class="profile-sidebar">
             <div class="profile-user-card">
                 <div class="profile-user-avatar">
-                    <img src="{{ url_for('static', filename='uploads/avatars/' + user['avatar']) }}" alt="User Avatar">
+                    <img src="{{ url_for('static', filename=user['avatar']) }}" alt="User Avatar">
                 </div>
                 <div class="profile-user-info">
                     <h2>{{ user['name'] }}</h2>
@@ -31,7 +34,7 @@
         </aside>
         <main class="profile-main">
             <section id="profile-section" class="profile-content active">
-                <form class="account-form" action="{{ url_for('update_profile') }}" method="POST" enctype="multipart/form-data">
+                <form id="updateProfileForm" class="account-form" enctype="multipart/form-data">
                     <h1>Account Settings</h1>
                     <input type="hidden" name="userId" value="{{ user['id'] }}">
                     <div class="form-group">
@@ -44,28 +47,28 @@
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" name="password" value="{{ user['password'] }}">
+                        <input type="password" id="password" name="password">
                     </div>
                     <h1>Avatar</h1>
                     <div class="form-group">
                         <ul>
                             <li><input type="radio" name="avatar" value="cat1.jpg" id="cb1">
-                                <label class="avatar-image-label" for="cb1"><img src="{{ url_for('static', filename='uploads/avatars/cat1.jpg') }}"></label>
+                                <label class="avatar-image-label" for="cb1"><img src="{{ url_for('static', filename='cat1.jpg') }}" alt="Cat 1"></label>
                             </li>
                             <li><input type="radio" name="avatar" value="cat2.jpg" id="cb2">
-                                <label class="avatar-image-label" for="cb2"><img src="{{ url_for('static', filename='uploads/avatars/cat2.jpg') }}"></label>
+                                <label class="avatar-image-label" for="cb2"><img src="{{ url_for('static', filename='cat2.jpg') }}" alt="Cat 2"></label>
                             </li>
                             <li><input type="radio" name="avatar" value="cat3.jpg" id="cb3">
-                                <label class="avatar-image-label" for="cb3"><img src="{{ url_for('static', filename='uploads/avatars/cat3.jpg') }}"></label>
+                                <label class="avatar-image-label" for="cb3"><img src="{{ url_for('static', filename='cat3.jpg') }}" alt="Cat 3"></label>
                             </li>
                             <li><input type="radio" name="avatar" value="cat4.jpg" id="cb4">
-                                <label class="avatar-image-label" for="cb4"><img src="{{ url_for('static', filename='uploads/avatars/cat4.jpg') }}"></label>
+                                <label class="avatar-image-label" for="cb4"><img src="{{ url_for('static', filename='cat4.jpg') }}" alt="Cat 4"></label>
                             </li>
                         </ul>
                     </div>
                     <button type="submit" class="save-changes-button">Save Changes</button>
                 </form>
-                <form class="account-form" action="{{ url_for('delete_account') }}" method="POST">
+                <form id="deleteAccountForm" class="account-form">
                     <input type="hidden" name="userId" value="{{ user['id'] }}">
                     <div class="form-group">
                         <h2>Account Removal</h2>
@@ -83,6 +86,64 @@
 
             toggle.addEventListener('click', function () {
                 sidebar.classList.toggle('active');
+            });
+
+            document.getElementById('updateProfileForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const data = {
+                    userId: formData.get('userId'),
+                    full_name: formData.get('full_name'),
+                    email: formData.get('email'),
+                    password: formData.get('password'),
+                    avatar: formData.get('avatar')
+                };
+
+                fetch('/update_profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        alert(data.message);
+                        window.location.reload();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            document.getElementById('deleteAccountForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const data = {
+                    userId: formData.get('userId')
+                };
+
+                fetch('/delete_account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        alert(data.message);
+                        window.location.href = '/';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
             });
         });
     </script>
