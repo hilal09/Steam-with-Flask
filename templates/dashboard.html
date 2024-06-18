@@ -33,7 +33,7 @@
                     <div class="series-item-info">
                         <div class="rating">
                             {% for i in range(1, 6) %}
-                                {% if i == serie.rating %}
+                                {% if i <= serie.rating %}
                                     <span class="star filled">&#9733;</span>
                                 {% else %}
                                     <span class="star">&#9733;</span>
@@ -141,6 +141,8 @@
                 const genre = $(".genre").val();
                 const platform = $(".platform").val();
                 const rating = $(".rating").val();
+
+                console.log("Rating:", rating);
             
                 var pictureFile = $(".picture")[0].files[0];
             
@@ -157,7 +159,7 @@
                         picture: pictureBase64,
                         rating: rating
                     };
-            
+
                     $.ajax({
                         url: '/series',
                         method: 'POST',

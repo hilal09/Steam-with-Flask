@@ -238,9 +238,9 @@ def add_series():
     seasons = data.get('seasons')
     genre = data.get('genre')
     platform = data.get('platform')
-    picture_base64 = data.get('picture')
     rating = data.get('rating')
-
+    picture_base64 = data.get('picture')
+    
     if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
         return jsonify({'error': 'Missing data'}), 400
 
