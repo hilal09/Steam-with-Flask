@@ -22,7 +22,6 @@
                 <button class="open-popup">Add new <br> series</button>
                 {% for serie in series %}
                 <div class="series-item">
-                    <!-- Überprüfen Sie, ob der Base64-String korrekt ist -->
                     <img src="data:image/jpeg;base64,{{ serie.picture }}" alt="{{ serie.title }}">
                     <div class="series-item-info">
                         <div class="rating">
@@ -129,28 +128,52 @@
 
             $("#series-form").submit(function(event) {
                 event.preventDefault();
-                var formData = new FormData(this);
-
-                $.ajax({
-                    url: '/series',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(data) {
-                        if (data.error) {
-                            console.error("Failed to add series:", data.error);
-                        } else {
-                            togglePopup(false);
-                            $("#series-form")[0].reset();
-                            location.reload();
+            
+                const title = $(".title").val();
+                const year = $(".year").val();
+                const seasons = $(".seasons").val();
+                const genre = $(".genre").val();
+                const platform = $(".platform").val();
+                const rating = $(".rating").val();
+            
+                var pictureFile = $(".picture")[0].files[0];
+            
+                var reader = new FileReader();
+                reader.onloadend = function() {
+                    var pictureBase64 = reader.result.replace(/^.*;base64,/, '');
+            
+                    var formData = {
+                        title: title,
+                        year: year,
+                        seasons: seasons,
+                        genre: genre,
+                        platform: platform,
+                        picture: pictureBase64,
+                        rating: rating
+                    };
+            
+                    $.ajax({
+                        url: '/series',
+                        method: 'POST',
+                        contentType: "application/json",
+                        data: JSON.stringify(formData),
+                        success: function(data) {
+                            if (data.error) {
+                                console.error("Failed to add series:", data.error);
+                            } else {
+                                togglePopup(false);
+                                $("#series-form")[0].reset();
+                                location.reload();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("Failed to add series:", error);
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Failed to add series:", error);
-                    }
-                });
+                    });
+                };
+                reader.readAsDataURL(pictureFile);
             });
+            
 
             $(".delete-btn").click(function() {
                 var seriesId = $(this).data("series-id");
@@ -176,7 +199,7 @@
                 const fileExtension = fileName.split('.').pop().toLowerCase();
 
                 if (fileExtension !== 'jpg' && fileExtension !== 'png') {
-                    alert('Bitte wählen Sie eine Datei mit der Erweiterung .jpg oder .png aus.');
+                    alert('Please choose a file with the .jpg or .png extension.');
                     this.value = '';
                 }
             });

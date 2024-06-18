@@ -6,7 +6,6 @@ from flask import session, redirect, url_for
 from config import Config  
 
 
-
 app = Flask(__name__)
 app.secret_key = 'steam123'
 app.config.from_object(Config)  
@@ -119,6 +118,9 @@ def logout():
     # Redirect to the login page
     return redirect(url_for('index'))
 
+
+#Profile start
+
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
@@ -130,6 +132,15 @@ def profile():
     user = cursor.fetchone()
     cursor.close()
 
+    if user:
+        user = {
+            'id': user[0],
+            'name': user[1],
+            'email': user[2],
+            'password': user[3],
+            'avatar': user[4] if user[4] else 'default_avatar.jpg' 
+        }
+
     return render_template('profile.html', user=user)
 
 @app.route('/update_profile', methods=['POST'])
@@ -137,11 +148,12 @@ def update_profile():
     if 'user_id' not in session:
         return redirect(url_for('index'))
 
-    user_id = request.form['userId']
-    name = request.form['full_name']
-    email = request.form['email']
-    password = request.form['password']
-    avatar = request.form.get('avatar', '')
+    data = request.get_json()
+    user_id = data.get('userId')
+    name = data.get('full_name')
+    email = data.get('email')
+    password = data.get('password')
+    avatar = data.get('avatar', '')
 
     cursor = mysql.connection.cursor()
 
@@ -162,14 +174,16 @@ def update_profile():
     mysql.connection.commit()
     cursor.close()
 
-    return redirect(url_for('profile'))
+    return jsonify({'message': 'Profile updated successfully'})
+
 
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
     if 'user_id' not in session:
         return redirect(url_for('index'))
 
-    user_id = request.form['userId']
+    data = request.get_json()
+    user_id = data.get('userId')
 
     cursor = mysql.connection.cursor()
     cursor.execute('DELETE FROM my_series WHERE user_id = %s', (user_id,))
@@ -180,8 +194,9 @@ def delete_account():
 
     session.clear()
 
-    return redirect(url_for('index'))
+    return jsonify({'message': 'Account deleted successfully'})
 
+#Profile end
 
 
 # REST endpoints for series
@@ -218,19 +233,21 @@ def add_series():
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    title = request.form.get('title')
-    year = request.form.get('year')
-    seasons = request.form.get('seasons')
-    genre = request.form.get('genre')
-    platform = request.form.get('platform')
-    picture = request.files.get('picture')
-    rating = request.form.get('rating')
+    data = request.get_json() 
 
-    if not title or not year or not seasons or not genre or not platform or not picture or not rating:
+    title = data.get('title')
+    year = data.get('year')
+    seasons = data.get('seasons')
+    genre = data.get('genre')
+    platform = data.get('platform')
+    picture_base64 = data.get('picture')
+    rating = data.get('rating')
+
+    if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
         return jsonify({'error': 'Missing data'}), 400
-    
-    picture_data = picture.read()
-    picture_base64 = base64.b64encode(picture_data).decode('utf-8')
+
+
+    picture_data = base64.b64decode(picture_base64)
 
     cursor = mysql.connection.cursor()
     cursor.execute('''
@@ -241,6 +258,7 @@ def add_series():
     cursor.close()
 
     return jsonify({'success': True}), 201
+
 
 @app.route('/series/<int:series_id>', methods=['DELETE'])
 def delete_series(series_id):
@@ -256,4 +274,4 @@ def delete_series(series_id):
     return jsonify({'success': True}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)  
