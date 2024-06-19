@@ -234,7 +234,7 @@ body.active-popup .popup {
     opacity: 1;
 }
 .series-item .series-item-info p:first-child {
-    font-size: 14px; /* Größere Schrift für den Titel */
+    font-size: 14px;
 }
 
 /* end of styles for dashboard page */
