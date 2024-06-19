@@ -1,3 +1,10 @@
+<!--
+    Author: Hilal Cubukcu
+    Title: Login Page
+    Last modified on: 07.06.2024
+    Summary: This file represents the login page for Steam. It includes a form for user authentication and JavaScript for handling the login process.
+-->
+    
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
-    <!-- JavaScript code in the header -->
     <script>
+        //Hier wurde DOM verwendet, damit der JavaScript Funktion .addEventListener funktioniert. Alle Infos müssen zunächst geladen werden, bevor man submitted.
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById('loginForm').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -26,7 +33,7 @@
                     if (data.error) {
                         document.getElementById('error').innerText = data.error;
                     } else {
-                        // Redirect to dashboard
+                        // auf Dashboard weiterleitehn
                         window.location.href = '/dashboard';
                     }
                 })

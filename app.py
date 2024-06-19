@@ -1,63 +1,28 @@
-from flask import Flask, render_template, request, jsonify
+"""
+Author: Zeinab Barakat, Hilal Cubukcu(login, register, logout, add_series), Melisa Rosic Emira, Yudum Yilmaz
+Title: Steam Series Management Application
+Last modified on: 19.06.2024
+Summary: This file provides functionality for user authentication, series management, searching for added series and profile management using REST API. 
+"""
+
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_mysqldb import MySQL
 from flask_bcrypt import check_password_hash, generate_password_hash
-from flask import session, redirect, url_for
 from config import Config  
 import base64
+from re import match
 
 app = Flask(__name__)
 app.secret_key = 'steam123'
 app.config.from_object(Config)  
-
-
 mysql = MySQL(app)
 
+# LOGIN FUNCTIONALITY
 @app.route('/')
-@app.route('/index')
 def index():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
     return render_template('login.html')
-
-
-@app.route('/register')
-def register():
-    return render_template('registration.html')
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
-@app.route('/dashboard_data')
-def dashboard_data():
-    if 'user_id' in session:
-        user_id = session['user_id']
-        cursor = mysql.connection.cursor()
-        cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series WHERE user_id = %s', (user_id,))
-        series = cursor.fetchall()
-        cursor.close()
-
-        series_list = []
-        for row in series:
-            if row[6] is not None:
-                picture_base64 = base64.b64encode(row[6]).decode('utf-8')
-            else:
-                picture_base64 = None
-
-            series_list.append({
-                'id': row[0],
-                'title': row[1],
-                'year': row[2],
-                'seasons': row[3],
-                'genre': row[4],
-                'platform': row[5],
-                'picture': picture_base64,
-                'rating': row[7]
-            })
-
-        return jsonify(series_list)
-    else:
-        return jsonify({'error': 'User not logged in'}), 401
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -67,20 +32,25 @@ def login():
     email = request.json.get('email')
     password = request.json.get('password')
 
-    # Retrieve user from the database using email
     cursor = mysql.connection.cursor()
     cursor.execute('SELECT * FROM user_accounts WHERE email = %s', (email,))
     user = cursor.fetchone()
+    cursor.close()
 
-    if user and check_password_hash(user[3], password):  # Assuming password hash is in the fourth column
-        # Successful login
-        session['user_id'] = user[0]  # Assuming user_id is the first column in your users table
+    if user and check_password_hash(user[3], password):  
+        session['user_id'] = user[0]
         return jsonify({'message': 'Login successful'})
     else:
-        # Invalid credentials
         return jsonify({'error': 'Invalid email or password'}), 401
 
-    
+# REGISTER FUNCTIONALITY
+@app.route('/register')
+def register():
+    return render_template('registration.html')
+
+def validate_email(email):
+    return match(r'[^@]+@[^@]+\.[^@]+', email)
+
 @app.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -108,20 +78,174 @@ def register_user():
 
     return jsonify({'success': True}), 201
 
-def validate_email(email):
-    from re import match
-    return match(r'[^@]+@[^@]+\.[^@]+', email)
+# DASHBOARD FUNCTIONALITY
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    return render_template('dashboard.html')
 
-@app.route('/logout')
-def logout():
-    # Clear the session data
-    session.clear()
-    # Redirect to the login page
-    return redirect(url_for('index'))
+@app.route('/dashboard_data')
+def dashboard_data():
+    if 'user_id' in session:
+        user_id = session['user_id']
+        cursor = mysql.connection.cursor()
+        cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series WHERE user_id = %s', (user_id,))
+        series = cursor.fetchall()
+        cursor.close()
 
+        series_list = []
+        for row in series:
+            picture_base64 = base64.b64encode(row[6]).decode('utf-8') if row[6] else None
+            series_list.append({
+                'id': row[0],
+                'title': row[1],
+                'year': row[2],
+                'seasons': row[3],
+                'genre': row[4],
+                'platform': row[5],
+                'picture': picture_base64,
+                'rating': row[7]
+            })
 
-#Profile start
+        return jsonify(series_list)
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+@app.route('/series', methods=['GET'])
+def get_all_series():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
 
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series')
+    series = cursor.fetchall()
+    cursor.close()
+
+    series_list = []
+    for row in series:
+        series_list.append({
+            'id': row[0],
+            'title': row[1],
+            'year': row[2],
+            'seasons': row[3],
+            'genre': row[4],
+            'platform': row[5],
+            'picture': row[6],
+            'rating': row[7]
+        })
+
+    return jsonify(series_list)
+
+@app.route('/series', methods=['POST'])
+def add_series():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    title = data.get('title')
+    year = data.get('year')
+    seasons = data.get('seasons')
+    genre = data.get('genre')
+    platform = data.get('platform')
+    rating = data.get('rating')
+    picture_base64 = data.get('picture')
+
+    if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
+        return jsonify({'error': 'Missing data'}), 400
+
+    picture_data = base64.b64decode(picture_base64)
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('''
+        INSERT INTO my_series (user_id, title, year, seasons, genre, platform, picture, rating)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    ''', (user_id, title, year, seasons, genre, platform, picture_data, rating))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'success': True}), 201
+
+@app.route('/series/<int:series_id>', methods=['DELETE'])
+def delete_series(series_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('DELETE FROM my_series WHERE id = %s AND user_id = %s', (series_id, user_id))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'success': True}), 200
+
+# SEARCH FUNCTIONALITY
+@app.route('/search')
+def search():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    return render_template('search.html')
+
+@app.route('/search_handler', methods=['GET'])
+def search_handler():
+    query = request.args.get('query', '')
+    title_filter = request.args.get('title', '')
+    genre_filter = request.args.get('genre', '')
+    platform_filter = request.args.get('platform', '')
+
+    query_conditions = []
+    query_params = []
+
+    if query:
+        query_conditions.append("(title LIKE %s OR genre LIKE %s OR platform LIKE %s)")
+        query_params.extend(['%' + query + '%'] * 3)
+
+    if title_filter and title_filter != 'title':
+        if title_filter == 'a-j':
+            query_conditions.append("title REGEXP '^[A-Ja-j]'")
+        elif title_filter == 'k-t':
+            query_conditions.append("title REGEXP '^[K-Tk-t]'")
+        elif title_filter == 'u-z':
+            query_conditions.append("title REGEXP '^[U-Zu-z]'")
+
+    if genre_filter and genre_filter != 'genre':
+        query_conditions.append("genre LIKE %s")
+        query_params.append('%' + genre_filter + '%')
+
+    if platform_filter and platform_filter != 'platform':
+        query_conditions.append("platform LIKE %s")
+        query_params.append('%' + platform_filter + '%')
+
+    where_clause = ' AND '.join(query_conditions) if query_conditions else '1'
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(f"""
+        SELECT id, title, year, seasons, genre, platform, picture, rating
+        FROM my_series
+        WHERE {where_clause}
+    """, query_params)
+    my_series = cursor.fetchall()
+    cursor.close()
+
+    search_results = []
+    for row in my_series:
+        picture_base64 = base64.b64encode(row[6]).decode('utf-8') if row[6] else None
+        search_results.append({
+            'id': row[0],
+            'title': row[1],
+            'year': row[2],
+            'seasons': row[3],
+            'genre': row[4],
+            'platform': row[5],
+            'picture': picture_base64,
+            'rating': row[7]
+        })
+
+    return jsonify(search_results)
+
+# PROFILE FUNCTIONALITY
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
@@ -177,7 +301,6 @@ def update_profile():
 
     return jsonify({'message': 'Profile updated successfully'})
 
-
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
     if 'user_id' not in session:
@@ -189,7 +312,6 @@ def delete_account():
     cursor = mysql.connection.cursor()
     cursor.execute('DELETE FROM my_series WHERE user_id = %s', (user_id,))
     cursor.execute('DELETE FROM user_accounts WHERE id = %s', (user_id,))
-
     mysql.connection.commit()
     cursor.close()
 
@@ -197,151 +319,11 @@ def delete_account():
 
     return jsonify({'message': 'Account deleted successfully'})
 
-#Profile end
-
-
-# REST endpoints for series
-@app.route('/series', methods=['GET'])
-def get_all_series():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-
-    cursor = mysql.connection.cursor()
-    cursor.execute('SELECT id, title, year, seasons, genre, platform, picture, rating FROM my_series')
-    series = cursor.fetchall()
-    cursor.close()
-
-    series_list = []
-    for row in series:
-        series_list.append({
-            'id': row[0],
-            'title': row[1],
-            'year': row[2],
-            'seasons': row[3],
-            'genre': row[4],
-            'platform': row[5],
-            'picture': row[6],
-            'rating': row[7]
-        })
-
-    return jsonify(series_list)
-
-@app.route('/series', methods=['POST'])
-def add_series():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    data = request.get_json() 
-    
-    title = data.get('title')
-    year = data.get('year')
-    seasons = data.get('seasons')
-    genre = data.get('genre')
-    platform = data.get('platform')
-    rating = data.get('rating')
-    picture_base64 = data.get('picture')
-    
-    if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
-        return jsonify({'error': 'Missing data'}), 400
-
-
-    picture_data = base64.b64decode(picture_base64)
-
-    cursor = mysql.connection.cursor()
-    cursor.execute('''
-        INSERT INTO my_series (user_id, title, year, seasons, genre, platform, picture, rating)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    ''', (user_id, title, year, seasons, genre, platform, picture_data, rating))
-    mysql.connection.commit()
-    cursor.close()
-
-    return jsonify({'success': True}), 201
-
-
-@app.route('/series/<int:series_id>', methods=['DELETE'])
-def delete_series(series_id):
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    cursor = mysql.connection.cursor()
-    cursor.execute('DELETE FROM my_series WHERE id = %s AND user_id = %s', (series_id, user_id))
-    mysql.connection.commit()
-    cursor.close()
-
-    return jsonify({'success': True}), 200
-
-@app.route('/search', methods=['GET'])
-def search():
-    return render_template('search.html')
-
-from flask import jsonify
-
-@app.route('/search_handler', methods=['GET'])
-def search_handler():
-    query = request.args.get('query', '')
-    title_filter = request.args.get('title', '')
-    genre_filter = request.args.get('genre', '')
-    platform_filter = request.args.get('platform', '')
-
-    print(f"Received Filters - Query: {query}, Title: {title_filter}, Genre: {genre_filter}, Platform: {platform_filter}")
-
-    # Construct dynamic query
-    query_conditions = []
-    query_params = []
-
-    if query:
-        query_conditions.append("(title LIKE %s OR genre LIKE %s OR platform LIKE %s)")
-        query_params.extend(['%' + query + '%'] * 3)
-
-    if title_filter and title_filter != 'title':
-        if title_filter == 'a-j':
-            query_conditions.append("title REGEXP '^[A-Ja-j]'")
-        elif title_filter == 'k-t':
-            query_conditions.append("title REGEXP '^[K-Tk-t]'")
-        elif title_filter == 'u-z':
-            query_conditions.append("title REGEXP '^[U-Zu-z]'")
-
-    if genre_filter and genre_filter != 'genre':
-        query_conditions.append("genre LIKE %s")
-        query_params.append('%' + genre_filter + '%')
-
-    if platform_filter and platform_filter != 'platform':
-        query_conditions.append("platform LIKE %s")
-        query_params.append('%' + platform_filter + '%')
-
-    where_clause = ' AND '.join(query_conditions) if query_conditions else '1'
-
-    print(f"Constructed WHERE Clause: {where_clause}")
-    print(f"Query Parameters: {query_params}")
-
-    cursor = mysql.connection.cursor()
-    cursor.execute(f"""
-        SELECT id, title, year, seasons, genre, platform, picture, rating
-        FROM my_series
-        WHERE {where_clause}
-    """, query_params)
-    my_series = cursor.fetchall()
-    cursor.close()
-
-    search_results = []
-    for row in my_series:
-        picture_base64 = base64.b64encode(row[6]).decode('utf-8') if row[6] else None
-        search_results.append({
-            'id': row[0],
-            'title': row[1],
-            'year': row[2],
-            'seasons': row[3],
-            'genre': row[4],
-            'platform': row[5],
-            'picture': picture_base64,
-            'rating': row[7]
-        })
-
-    return jsonify(search_results)
+# LOGOUT FUNCTIONALITY
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)  
+    app.run(debug=True)
