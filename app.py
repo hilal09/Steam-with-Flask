@@ -271,9 +271,74 @@ def delete_series(series_id):
 
     return jsonify({'success': True}), 200
 
-@app.route('/search')
+@app.route('/search', methods=['GET'])
 def search():
     return render_template('search.html')
+
+from flask import jsonify
+
+@app.route('/search_handler', methods=['GET'])
+def search_handler():
+    query = request.args.get('query', '')
+    title_filter = request.args.get('title', '')
+    genre_filter = request.args.get('genre', '')
+    platform_filter = request.args.get('platform', '')
+
+    print(f"Received Filters - Query: {query}, Title: {title_filter}, Genre: {genre_filter}, Platform: {platform_filter}")
+
+    # Construct dynamic query
+    query_conditions = []
+    query_params = []
+
+    if query:
+        query_conditions.append("(title LIKE %s OR genre LIKE %s OR platform LIKE %s)")
+        query_params.extend(['%' + query + '%'] * 3)
+
+    if title_filter and title_filter != 'title':
+        if title_filter == 'a-j':
+            query_conditions.append("title REGEXP '^[A-Ja-j]'")
+        elif title_filter == 'k-t':
+            query_conditions.append("title REGEXP '^[K-Tk-t]'")
+        elif title_filter == 'u-z':
+            query_conditions.append("title REGEXP '^[U-Zu-z]'")
+
+    if genre_filter and genre_filter != 'genre':
+        query_conditions.append("genre LIKE %s")
+        query_params.append('%' + genre_filter + '%')
+
+    if platform_filter and platform_filter != 'platform':
+        query_conditions.append("platform LIKE %s")
+        query_params.append('%' + platform_filter + '%')
+
+    where_clause = ' AND '.join(query_conditions) if query_conditions else '1'
+
+    print(f"Constructed WHERE Clause: {where_clause}")
+    print(f"Query Parameters: {query_params}")
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(f"""
+        SELECT id, title, year, seasons, genre, platform, picture, rating
+        FROM my_series
+        WHERE {where_clause}
+    """, query_params)
+    my_series = cursor.fetchall()
+    cursor.close()
+
+    search_results = []
+    for row in my_series:
+        picture_base64 = base64.b64encode(row[6]).decode('utf-8') if row[6] else None
+        search_results.append({
+            'id': row[0],
+            'title': row[1],
+            'year': row[2],
+            'seasons': row[3],
+            'genre': row[4],
+            'platform': row[5],
+            'picture': picture_base64,
+            'rating': row[7]
+        })
+
+    return jsonify(search_results)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)  

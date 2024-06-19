@@ -9,10 +9,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <script>
         function loadSearchResults(query, titleFilter, genreFilter, platformFilter) {
+            console.log(`Query: ${query}, Title: ${titleFilter}, Genre: ${genreFilter}, Platform: ${platformFilter}`);
             fetch(`/search_handler?query=${query}&title=${titleFilter}&genre=${genreFilter}&platform=${platformFilter}`)
-                .then(response => response.text())
+                .then(response => response.json())
                 .then(data => {
-                    document.getElementById("search-results").innerHTML = data;
+                    let searchResultsContainer = document.getElementById("search-results");
+                    searchResultsContainer.innerHTML = "";
+                    data.forEach(series => {
+                        let resultDiv = document.createElement("div");
+                        resultDiv.classList.add("search-result");
+
+                        let title = document.createElement("h3");
+                        title.textContent = series.title;
+                        resultDiv.appendChild(title);
+
+                        let genre = document.createElement("p");
+                        genre.textContent = series.genre;
+                        resultDiv.appendChild(genre);
+
+                        let platform = document.createElement("p");
+                        platform.textContent = series.platform;
+                        resultDiv.appendChild(platform);
+
+                        let year = document.createElement("p");
+                        year.textContent = series.year;
+                        resultDiv.appendChild(year);
+
+                        let seasons = document.createElement("p");
+                        seasons.textContent = `${series.seasons} seasons`;
+                        resultDiv.appendChild(seasons);
+
+                        if (series.picture) {
+                            let img = document.createElement("img");
+                            img.src = `data:image/jpeg;base64,${series.picture}`;
+                            img.alt = `${series.title} poster`;
+                            resultDiv.appendChild(img);
+                        }
+
+                        let rating = document.createElement("p");
+                        rating.textContent = `Rating: ${series.rating}`;
+                        resultDiv.appendChild(rating);
+
+                        searchResultsContainer.appendChild(resultDiv);
+                    });
                 })
                 .catch(error => console.error('Error loading search results:', error));
         }
@@ -90,19 +129,6 @@
             </form>
         </div>
 
-        <!-- <div class="series-container">
-            <div class="my-series-container">
-                <div class="table-titles">
-                    <h2 class="table-title">My Series</h2>
-                </div>
-            </div>
-
-            <div class="default-series-container">
-                <div class="table-titles">
-                    <h2 class="table-title">Default Series</h2>
-                </div>
-            </div>
-        </div> -->
         <div id="search-results" class="search-results-container"></div>
     </div>
 </body>
