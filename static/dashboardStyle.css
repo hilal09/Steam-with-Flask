@@ -183,7 +183,7 @@ body.active-popup .popup {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    margin-top: 100px;
+    margin-top: 70px;
     margin-left: 150px;
     margin-right: 150px; 
 }

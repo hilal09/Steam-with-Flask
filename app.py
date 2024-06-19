@@ -1,5 +1,5 @@
 """
-Author: Zeinab Barakat, Hilal Cubukcu(login, register, logout, add_series), Melisa Rosic Emira, Yudum Yilmaz
+Author: Zeinab Barakat(dashboard, dashboard_data, get_all_series, add_series, delete_series), Hilal Cubukcu(login, register, logout, add_series), Melisa Rosic Emira, Yudum Yilmaz
 Title: Steam Series Management Application
 Last modified on: 19.06.2024
 Summary: This file provides functionality for user authentication, series management, searching for added series and profile management using REST API. 

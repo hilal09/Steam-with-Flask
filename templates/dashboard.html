@@ -1,6 +1,6 @@
 <!--
-    Author: Zeinab Barakat (add and delete series functionality and design), Hilal Cubukcu(idk bro)
-    Last modified on: 19.06.2024
+    Author: Zeinab Barakat (add and delete series functionality and design), Hilal Cubukcu(modified add series to REST)
+    Last modified on: 20.06.2024
     Title: Dashboard Page 
     Summary: This page displays the dashboard for logged-in users. It retrieves series data for the current user and allows users to add new series or delete them.
 -->
@@ -9,6 +9,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboardStyle.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -18,12 +19,9 @@
 <body>
 
     {% include 'navigation.html' %}
+    {% include 'logo.html' %}
 
     <div class="content">
-        <div class="logo">
-            <h1>Steam<sup class="tm">TM</sup></h1>
-        </div>
-
         <div class="dashboard-container">
             <div class="series-list">
                 <button class="open-popup">Add new <br> series</button>
