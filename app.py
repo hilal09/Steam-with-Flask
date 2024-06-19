@@ -26,6 +26,10 @@ def register():
 
 @app.route('/dashboard')
 def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/dashboard_data')
+def dashboard_data():
     if 'user_id' in session:
         user_id = session['user_id']
         cursor = mysql.connection.cursor()
@@ -51,10 +55,9 @@ def dashboard():
                 'rating': row[7]
             })
 
-        return render_template('dashboard.html', series=series_list)
+        return jsonify(series_list)
     else:
-        return redirect(url_for('index'))
-
+        return jsonify({'error': 'User not logged in'}), 401
 
 @app.route('/login', methods=['POST'])
 def login():
