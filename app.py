@@ -26,6 +26,10 @@ def register():
 
 @app.route('/dashboard')
 def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/dashboard_data')
+def dashboard_data():
     if 'user_id' in session:
         user_id = session['user_id']
         cursor = mysql.connection.cursor()
@@ -51,10 +55,9 @@ def dashboard():
                 'rating': row[7]
             })
 
-        return render_template('dashboard.html', series=series_list)
+        return jsonify(series_list)
     else:
-        return redirect(url_for('index'))
-
+        return jsonify({'error': 'User not logged in'}), 401
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -232,15 +235,15 @@ def add_series():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.get_json() 
-
+    
     title = data.get('title')
     year = data.get('year')
     seasons = data.get('seasons')
     genre = data.get('genre')
     platform = data.get('platform')
-    picture_base64 = data.get('picture')
     rating = data.get('rating')
-
+    picture_base64 = data.get('picture')
+    
     if not title or not year or not seasons or not genre or not platform or not picture_base64 or not rating:
         return jsonify({'error': 'Missing data'}), 400
 

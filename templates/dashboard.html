@@ -1,5 +1,5 @@
 <!--
-    Author: Zeinab Barakat (add and delete series functionality and design), Hilal Cubukcu(has adapted it to meet the REST service requirements)
+    Author: Zeinab Barakat (add and delete series functionality and design), Hilal Cubukcu(idk bro)
     Last modified on: 19.06.2024
     Title: Dashboard Page 
     Summary: This page displays the dashboard for logged-in users. It retrieves series data for the current user and allows users to add new series or delete them.
@@ -27,28 +27,6 @@
         <div class="dashboard-container">
             <div class="series-list">
                 <button class="open-popup">Add new <br> series</button>
-                {% for serie in series %}
-                <div class="series-item">
-                    <img src="data:image/jpeg;base64,{{ serie.picture }}" alt="{{ serie.title }}">
-                    <div class="series-item-info">
-                        <div class="rating">
-                            {% for i in range(1, 6) %}
-                                {% if i == serie.rating %}
-                                    <span class="star filled">&#9733;</span>
-                                {% else %}
-                                    <span class="star">&#9733;</span>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                        <p>{{ serie.title }}</p>
-                        <p>Year: {{ serie.year }}</p>
-                        <p>Seasons: {{ serie.seasons }}</p>
-                        <p>Genre: {{ serie.genre }}</p>
-                        <p>Platform: {{ serie.platform }}</p>
-                    </div>
-                    <button class="delete-btn" data-series-id="{{ serie.id }}">&times;</button>
-                </div>                
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -122,42 +100,43 @@
                     $("#series-form")[0].reset();
                 }
             }
-
-            $(".open-popup").click(function() {
+    
+            $(document).on("click", ".open-popup", function() {
                 togglePopup(true);
                 window.scrollTo(0, 0);
             });
-
+    
             $(".close-btn").click(function() {
                 togglePopup(false);
             });
-
+    
             $("#series-form").submit(function(event) {
                 event.preventDefault();
-            
+    
                 const title = $(".title").val();
                 const year = $(".year").val();
                 const seasons = $(".seasons").val();
                 const genre = $(".genre").val();
                 const platform = $(".platform").val();
                 const rating = $(".rating").val();
-            
                 var pictureFile = $(".picture")[0].files[0];
-            
+    
                 var reader = new FileReader();
                 reader.onloadend = function() {
                     var pictureBase64 = reader.result.replace(/^.*;base64,/, '');
-            
+    
                     var formData = {
                         title: title,
                         year: year,
                         seasons: seasons,
                         genre: genre,
                         platform: platform,
-                        picture: pictureBase64,
-                        rating: rating
+                        rating: rating,
+                        picture: pictureBase64
                     };
-            
+    
+                    console.log("Sending data:", formData);
+    
                     $.ajax({
                         url: '/series',
                         method: 'POST',
@@ -169,48 +148,73 @@
                             } else {
                                 togglePopup(false);
                                 $("#series-form")[0].reset();
-                                location.reload();
+                                fetchSeries();
                             }
                         },
                         error: function(xhr, status, error) {
-                            console.error("Failed to add series:", error);
+                            console.error("Failed to add series:", error, xhr.responseText);
                         }
                     });
                 };
                 reader.readAsDataURL(pictureFile);
             });
-            
-
-            $(".delete-btn").click(function() {
-                var seriesId = $(this).data("series-id");
-                var confirmDelete = confirm("Are you sure you want to delete this series?");
-
-                if (confirmDelete) {
-                    $.ajax({
-                        url: "/series/" + seriesId,
-                        method: "DELETE",
-                        success: function(response) {
-                            location.reload();
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("Failed to delete series:", error);
-                        }
-                    });
-                }
-            });
-
-            $(".picture").change(function() {
-                const file = this.files[0];
-                const fileName = file.name;
-                const fileExtension = fileName.split('.').pop().toLowerCase();
-
-                if (fileExtension !== 'jpg' && fileExtension !== 'png') {
-                    alert('Please choose a file with the .jpg or .png extension.');
-                    this.value = '';
-                }
-            });
+    
+            function fetchSeries() {
+                $.ajax({
+                    url: '/dashboard_data',
+                    method: 'GET',
+                    success: function(seriesList) {
+                        const seriesContainer = $(".series-list");
+                        seriesContainer.empty();
+                        seriesContainer.append('<button class="open-popup">Add new <br> series</button>');
+    
+                        seriesList.forEach(function(serie) {
+                            const seriesItem = `
+                                <div class="series-item">
+                                    <img src="data:image/jpeg;base64,${serie.picture}" alt="${serie.title}">
+                                    <div class="series-item-info">
+                                    <p>${serie.title}</p>
+                                    <p>Year: ${serie.year}</p>
+                                    <p>Seasons: ${serie.seasons}</p>
+                                    <p>Genre: ${serie.genre.charAt(0).toUpperCase() + serie.genre.slice(1)}</p>
+                                    <p>Platform: ${serie.platform.charAt(0).toUpperCase() + serie.platform.slice(1)}</p>
+                                    <p>Rating: ${serie.rating}</p>
+                                    </div>
+                                    <button class="delete-btn" data-series-id="${serie.id}">&times;</button>
+                                </div>
+                            `;
+                            seriesContainer.append(seriesItem);
+                        });
+    
+                        $(document).on("click", ".delete-btn", function() {
+                            var seriesId = $(this).data("series-id");
+                            var confirmDelete = confirm("Are you sure you want to delete this series?");
+    
+                            if (confirmDelete) {
+                                $.ajax({
+                                    url: "/series/" + seriesId,
+                                    method: "DELETE",
+                                    success: function(response) {
+                                        togglePopup(false); 
+                                        location.reload();
+                                        fetchSeries();
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error("Failed to delete series:", error);
+                                    }
+                                });
+                            }
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Failed to fetch series:", error);
+                    }
+                });
+            }
+    
+            fetchSeries();
         });
-    </script>
+    </script>        
 
 </body>
 </html>
