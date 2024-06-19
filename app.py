@@ -235,7 +235,7 @@ def add_series():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.get_json() 
-
+    
     title = data.get('title')
     year = data.get('year')
     seasons = data.get('seasons')

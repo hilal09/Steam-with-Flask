@@ -233,23 +233,8 @@ body.active-popup .popup {
 .series-item:hover .series-item-info {
     opacity: 1;
 }
-
-.rating {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.star {
-    font-size: 24px;
-    color: #ccc;
-    cursor: default;
-    transition: color 0.3s;
-}
-
-.star.filled {
-    color: #ffcc00;
+.series-item .series-item-info p:first-child {
+    font-size: 14px; /* Größere Schrift für den Titel */
 }
 
 /* end of styles for dashboard page */
